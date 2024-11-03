@@ -60,6 +60,12 @@ class WebsiteParser:
 
         self.logger = logging.getLogger(__name__)
         self.logger.info("This is a log message from the Agent script")
+
+    def normalize_string(self,s):
+        # Reemplazar múltiples espacios y saltos de línea por un solo espacio
+        normalized = re.sub(r'\s+', ' ', s)  # Reemplaza múltiples espacios, tabulaciones y nuevas líneas por un solo espacio
+        return normalized.strip()  # Elimina espacios en blanco al principio y al final
+
     def convert_to_tsv(self, data):
         output = []
         for row in data:
@@ -104,6 +110,7 @@ class WebsiteParser:
         #                       aws_access_key_id=AWS_ACCESS_KEY_ID,
         #                       aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
         return client
+    
     def parse_website(self, source):
         category=source
         html_content = self.open_link(source)
@@ -125,6 +132,7 @@ class WebsiteParser:
         self.count=len(all_data)-1
         self.log_url=self.upload_file_to_space(self.log_file_name,self.log_file_name)
         self.send_output()
+
     def send_output(self):
         logging.shutdown()
         headers = {
@@ -141,6 +149,8 @@ class WebsiteParser:
         os.remove(self.output_filename)
         os.remove(self.log_file_name)
         requests.post(f"{send_out_endpoint}/job_complete", params=params, headers=headers)
+
+    
     @staticmethod
     def open_link(url):
         try:
@@ -220,11 +230,6 @@ class VersaceProductParser(WebsiteParser):
         else:
             return None
 
-    def normalize_string(self,s):
-        # Reemplazar múltiples espacios y saltos de línea por un solo espacio
-        normalized = re.sub(r'\s+', ' ', s)  # Reemplaza múltiples espacios, tabulaciones y nuevas líneas por un solo espacio
-        return normalized.strip()  # Elimina espacios en blanco al principio y al final
-
     def parse_product_blocks(self, soup):
         parsed_data = []
         column_names = [
@@ -242,7 +247,7 @@ class VersaceProductParser(WebsiteParser):
             product_url = item.find('a')['href']
             product_id = self.extract_product_id(product_url)
             product_name = product_name.text
-            product_name = self.normalize_string(product_name)
+            product_name = WebsiteParser.normalize_string(product_name)
 
             
             product_price = item.find('div', class_='price').text
@@ -251,7 +256,7 @@ class VersaceProductParser(WebsiteParser):
             label = item.find('span', class_='tile-badge')
             if label:
                 label = label.text
-                label = self.normalize_string(label)
+                label = WebsiteParser.normalize_string(label)
             else:
                 label = ''
 
@@ -332,7 +337,7 @@ class LouboutinProductParser(WebsiteParser):
 
 class GoldenGooseProductParser(WebsiteParser):
     def __init__(self):
-        self.brand = 'louboutin'
+        self.brand = 'goldengoose'
         super().__init__()
 
     def extract_id(self,url):
@@ -341,11 +346,6 @@ class GoldenGooseProductParser(WebsiteParser):
             return match.group(1)
         else:
             return None
-
-    def normalize_string(self,s):
-        # Reemplazar múltiples espacios y saltos de línea por un solo espacio
-        normalized = re.sub(r'\s+', ' ', s)  # Reemplaza múltiples espacios, tabulaciones y nuevas líneas por un solo espacio
-        return normalized.strip()  # Elimina espacios en blanco al principio y al final
 
     def parse_product_blocks(self, soup):
         parsed_data = []
@@ -366,11 +366,11 @@ class GoldenGooseProductParser(WebsiteParser):
             product_url = item.find('a', class_='link')['href']
 
             product_name = item.find('h3', class_='pdp-link').text
-            product_name = self.normalize_string(product_name)
+            product_name = WebsiteParser.normalize_string(product_name)
             product_price = item.find('div', class_='price').text
             product_price = product_price.replace(" ", "").replace("\n", '')
             label = item.find('div', class_='product-tag-box').text if item.find('div', class_='tile-tag') else ''
-            label = self.normalize_string(label)
+            label = WebsiteParser.normalize_string(label)
             images = item.find_all('img', class_='akamai-picture__image')
 
             for image in images:
@@ -406,11 +406,6 @@ class StellaMccartneyProductParser(WebsiteParser):
         else:
             return None
 
-    def normalize_string(self,s):
-        # Reemplazar múltiples espacios y saltos de línea por un solo espacio
-        normalized = re.sub(r'\s+', ' ', s)  # Reemplaza múltiples espacios, tabulaciones y nuevas líneas por un solo espacio
-        return normalized.strip()  # Elimina espacios en blanco al principio y al final
-
     def parse_product_blocks(self, soup):
         parsed_data = []
         column_names = [
@@ -430,14 +425,14 @@ class StellaMccartneyProductParser(WebsiteParser):
                 product_url = item.find('a', class_='link')['href']
 
                 product_name = item.find('a', class_='link').text
-                product_name = self.normalize_string(product_name)
+                product_name = WebsiteParser.normalize_string(product_name)
                 product_price = item.find('div', class_='price').text
                 product_price = product_price.replace(" ", "").replace("\n", '')
 
                 label = item.find('button', class_='preorder-button-toggle')
                 if label and 'Pre-Order' in label.text:
                     label = label.get_text(strip=True)
-                    label = self.normalize_string(label)
+                    label = WebsiteParser.normalize_string(label)
 
                 images = item.find_all('img')
                 for image in images:
@@ -474,9 +469,6 @@ class MooseKnuckLescanadaProductParser(WebsiteParser):
         else:
             return None
 
-    def normalize_string(self,s):
-        normalized = re.sub(r'\s+', ' ', s) 
-        return normalized.strip() 
 
     def parse_product_blocks(self, soup):
         parsed_data = []
@@ -555,10 +547,6 @@ class DolceGabbanaProductParser(WebsiteParser):
         return match.group(1) if match else None
 
 
-    def normalize_string(self,s):
-        normalized = re.sub(r'\s+', ' ', s) 
-        return normalized.strip() 
-
     def parse_product_blocks(self, soup):
         parsed_data = []
         column_names = [
@@ -600,7 +588,7 @@ class DolceGabbanaProductParser(WebsiteParser):
 
 class LoroPianaProductParser(WebsiteParser):
     def __init__(self):
-        self.brand = 'dolcegabbana'
+        self.brand = 'loropiana'
         super().__init__()
 
     def extract_id(self, url):
@@ -608,10 +596,6 @@ class LoroPianaProductParser(WebsiteParser):
         match = re.search(patron, url)
         return f"{match.group(1)}_{match.group(2)}" if match else None
 
-
-    def normalize_string(self,s):
-        normalized = re.sub(r'\s+', ' ', s) 
-        return normalized.strip() 
 
     def parse_product_blocks(self, soup):
         parsed_data = []
@@ -630,7 +614,7 @@ class LoroPianaProductParser(WebsiteParser):
 
             product_name = container_data.find('p', {'class':'link'}).text
             price = item.find('div', {'class':'price'}).text
-            price = self.normalize_string(price)
+            price = WebsiteParser.normalize_string(price)
             imgs = item.find_all('img', {'class':'lazy__img'})
             for img in imgs:
                 img_url = img['src']
@@ -661,10 +645,6 @@ class StoneIslandProductParser(WebsiteParser):
         return f"{match.group(1)}_{match.group(2)}" if match else None
 
 
-    def normalize_string(self,s):
-        normalized = re.sub(r'\s+', ' ', s) 
-        return normalized.strip() 
-
     def parse_product_blocks(self, soup):
         parsed_data = []
         column_names = [
@@ -685,7 +665,7 @@ class StoneIslandProductParser(WebsiteParser):
 
                 product_name = container_data.find('h2', {'class':'product-tile__name'}).text
                 price = item.find('span', {'class':'product-price-sale'}).text
-                price = self.normalize_string(price)
+                price = WebsiteParser.normalize_string(price)
                 imgs = item.find_all('img')
                 for img in imgs:
                     img_url = img['src']
